@@ -112,7 +112,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
   }
 
   String celsiusToFahrenheit(double celsius) {
-    return ((celsius * 9 / 5) + 32).toString();
+    return ((celsius * 9 / 5) + 32).toStringAsFixed(1);
   }
 
   String chooseWeatherAnimation(String? weatherCondition) {
