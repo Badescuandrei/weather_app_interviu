@@ -10,6 +10,7 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  int _currentPageIndex = 0;
   final pageIndexNotifier = ValueNotifier<int>(0);
   final PageController _pageController = PageController();
   @override
@@ -43,28 +44,32 @@ class _WeatherScreenState extends State<WeatherScreen> {
       body: Stack(
         alignment: AlignmentDirectional.bottomCenter,
         children: [
-          RefreshIndicator(
-            onRefresh: _refreshData,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: Provider.of<WeatherProvider>(context).locations.length,
-              onPageChanged: (index) {
-                {
-                  Provider.of<WeatherProvider>(context, listen: false)
-                      .changeLocation(index);
+          PageView.builder(
+            pageSnapping: false,
+            controller: _pageController,
+            itemCount: Provider.of<WeatherProvider>(context).locations.length,
+            onPageChanged: (index) {
+              setState(() {
+                // Update current index upon swipe
+                _currentPageIndex = index;
+              });
 
-                  pageIndexNotifier.value = index;
-                }
-              },
-              itemBuilder: (BuildContext context, int index) {
-                return SingleChildScrollView(
+              Provider.of<WeatherProvider>(context, listen: false)
+                  .changeLocation(index);
+            },
+            itemBuilder: (BuildContext context, int index) {
+              return RefreshIndicator(
+                onRefresh: () => _refreshData(
+                    Provider.of<WeatherProvider>(context, listen: false)
+                        .locations[index]),
+                child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Consumer<WeatherProvider>(
                     builder: (context, weatherProvider, child) {
                       if (weatherProvider.weatherData != null) {
                         return Column(
                           children: [
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 100),
                             Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -94,12 +99,12 @@ class _WeatherScreenState extends State<WeatherScreen> {
                       }
                     },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          Positioned(
+            bottom: 30,
             child: SmoothPageIndicator(
               effect: const WormEffect(), // Customizable effect
               controller: _pageController, // Your PageView's controller
@@ -129,8 +134,8 @@ class _WeatherScreenState extends State<WeatherScreen> {
     }
   }
 
-  Future<void> _refreshData() async {
+  Future<void> _refreshData(String location) async {
     await Provider.of<WeatherProvider>(context, listen: false)
-        .getCurrentWeather('Bucharest');
+        .getCurrentWeather(location);
   }
 }

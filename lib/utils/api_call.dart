@@ -5,10 +5,11 @@ import '../utils/model.dart';
 
 class WeatherProvider with ChangeNotifier {
   final String apiKey = 'ef419f72e06b85d2450192eec193abf5';
-  WeatherData? _weatherData;
-  bool _isCelsius = true;
 
+  WeatherData? _weatherData;
   WeatherData? get weatherData => _weatherData;
+
+  bool _isCelsius = true;
   bool get isCelsius => _isCelsius;
 
   Future<void> getCurrentWeather(String location) async {
@@ -31,6 +32,7 @@ class WeatherProvider with ChangeNotifier {
   }
 
   final List<String> locations = ['Bucharest', 'Pitesti'];
+
   int _currentIndex = 0;
   int get currentIndex => _currentIndex;
 
