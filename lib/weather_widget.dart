@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './utils/api_call.dart';
@@ -5,11 +7,16 @@ import 'package:lottie/lottie.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class WeatherScreen extends StatefulWidget {
+  const WeatherScreen({super.key});
+
   @override
   _WeatherScreenState createState() => _WeatherScreenState();
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
+  Timer? _updateTimer;
+  Timer? _refreshCountdownTimer;
+  int _refreshCountdown = 10;
   int _currentPageIndex = 0;
   final pageIndexNotifier = ValueNotifier<int>(0);
   final PageController _pageController = PageController();
@@ -18,6 +25,14 @@ class _WeatherScreenState extends State<WeatherScreen> {
     super.initState();
     Provider.of<WeatherProvider>(context, listen: false)
         .getCurrentWeather('Bucharest');
+    _startRefreshCountdown();
+  }
+
+  @override
+  void dispose() {
+    _updateTimer?.cancel();
+    _refreshCountdownTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -50,7 +65,6 @@ class _WeatherScreenState extends State<WeatherScreen> {
             itemCount: Provider.of<WeatherProvider>(context).locations.length,
             onPageChanged: (index) {
               setState(() {
-                // Update current index upon swipe
                 _currentPageIndex = index;
               });
 
@@ -69,6 +83,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
                       if (weatherProvider.weatherData != null) {
                         return Column(
                           children: [
+                            Text(
+                              'Refreshing data in: $_refreshCountdown seconds',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
                             const SizedBox(height: 100),
                             Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -137,5 +156,26 @@ class _WeatherScreenState extends State<WeatherScreen> {
   Future<void> _refreshData(String location) async {
     await Provider.of<WeatherProvider>(context, listen: false)
         .getCurrentWeather(location);
+  }
+
+  void _startRefreshCountdown() {
+    _refreshCountdownTimer =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_refreshCountdown > 0) {
+          _refreshCountdown--;
+        } else {
+          _refreshCountdown = 10;
+          _updateWeatherData();
+        }
+      });
+    });
+  }
+
+  void _updateWeatherData() {
+    final weatherProvider =
+        Provider.of<WeatherProvider>(context, listen: false);
+    weatherProvider
+        .getCurrentWeather(weatherProvider.locations[_currentPageIndex]);
   }
 }
